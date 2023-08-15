@@ -13,9 +13,16 @@ struct ContentView: View {
     
     @State private var isAnimating: Bool = false
     @State private var imageScale: CGFloat = 1
+    @State private var imageOffset: CGSize = .zero
     
     // MARK: - FUNCTION
     
+    func resetImageState() {
+        withAnimation(.spring()) {
+            imageScale = 1
+            imageOffset = .zero
+        }
+    }
     
     
     // MARK: - CONTENT
@@ -31,22 +38,39 @@ struct ContentView: View {
                     .padding()
                     .shadow(color: .black.opacity(0.2), radius: 12, x: 2, y: 2)
                     .opacity(isAnimating ? 1 : 0)
-                    .animation(.linear(duration: 1), value: isAnimating)
+                    .offset(imageOffset)
                     .scaleEffect(imageScale)
-                    .animation(.spring(), value: imageScale)
                 // MARK: - 1. TAP GESTURE
                     .onTapGesture(count: 2) {
                         if imageScale == 1 {
-                            imageScale = 5
+                            withAnimation(.spring()) {
+                                imageScale = 5
+                            }
                         } else {
-                            imageScale = 1
+                            resetImageState()
                         }
                     }
+                // MARK: - 2. DRAG GESTURE
+                    .gesture(
+                        DragGesture()
+                            .onChanged { gesture in
+                                withAnimation(.linear(duration: 1)) {
+                                    imageOffset = gesture.translation
+                                }
+                            }
+                            .onEnded { _ in
+                                if imageScale <= 1 {
+                                    resetImageState()
+                                }
+                            }
+                    )
             } //: ZSTACK
             .navigationTitle("Pinch & Zoom")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
-                isAnimating = true
+                withAnimation(.linear(duration: 1)) {
+                    isAnimating = true
+                }
             }
         } //: NAVIGATION
         .navigationViewStyle(.stack)
